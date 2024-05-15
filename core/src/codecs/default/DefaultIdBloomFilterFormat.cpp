@@ -139,9 +139,13 @@ DefaultIdBloomFilterFormat::write(const storage::FSHandlerPtr& fs_ptr,
     fs_ptr->operation_ptr_->CachePut(bloom_filter_file_path);
 }
 
-void
+void 
 DefaultIdBloomFilterFormat::create(int64_t capacity, segment::IdBloomFilterPtr& id_bloom_filter_ptr) {
-    scaling_bloom_t* bloom_filter = new_scaling_bloom(capacity, BLOOM_FILTER_ERROR_RATE);
+    int64_t safe_capacity = capacity;
+    if (safe_capacity <= 0) {
+        safe_capacity = 1024;
+    }
+    scaling_bloom_t* bloom_filter = new_scaling_bloom(safe_capacity, BLOOM_FILTER_ERROR_RATE);
     id_bloom_filter_ptr = std::make_shared<segment::IdBloomFilter>(bloom_filter);
 }
 

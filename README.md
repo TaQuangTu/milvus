@@ -9,6 +9,58 @@
 [![codebeat badge](https://codebeat.co/badges/e030a4f6-b126-4475-a938-4723d54ec3a7?style=plastic)](https://codebeat.co/projects/github-com-milvus-io-milvus-master)
 [![CodeFactor Grade](https://www.codefactor.io/repository/github/milvus-io/milvus/badge)](https://www.codefactor.io/repository/github/milvus-io/milvus)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/c4bb2ccfb51b47f99e43bfd1705edd95)](https://app.codacy.com/gh/milvus-io/milvus?utm_source=github.com&utm_medium=referral&utm_content=milvus-io/milvus&utm_campaign=Badge_Grade_Dashboard)
+## Fix bug Trap Divide Error
+
+### Short description
+This branch create a patch for tag v1.1.1 to fix the `Trap Divide Error` made by BloomFilter implementation from version v1.1.X.
+
+Function `DefaultIdBloomFilterFormat::create` is modified to:
+
+```cpp
+// file `core/src/codecs/default/DefaultIdBloomFilterFormat.cpp`.
+
+void 
+DefaultIdBloomFilterFormat::create(int64_t capacity, segment::IdBloomFilterPtr& id_bloom_filter_ptr) {
+    int64_t safe_capacity = capacity;
+    if (safe_capacity <= 0) {
+        safe_capacity = 1024;
+    }
+    scaling_bloom_t* bloom_filter = new_scaling_bloom(safe_capacity, BLOOM_FILTER_ERROR_RATE);
+    id_bloom_filter_ptr = std::make_shared<segment::IdBloomFilter>(bloom_filter);
+}
+```
+
+### Rebuild steps
+
+Steps to rebuild:
+1. Clone this branch:
+```bash
+git clone https://github.com/TaQuangTu/
+cd milvus
+git checkout fix_trap_divide_error
+```
+
+2. Compile milvus from source as in [text](INSTALL.md).
+
+3. Run docker container
+
+2. Inside the docker container, copy the newly built binary file milvus_server to host, by default, the file locates at /root/milvus/core/cmake_build/src/milvus_server .
+
+3. Build new docker image from the binary file.
+
+build new image with below dockerfile
+
+```Dockerfile
+FROM milvusdb/milvus:1.1.1-cpu-d061621-330cc6
+WORKDIR /COPY milvus_server /var/lib/milvus/bin/milvus_server
+RUN chmod 777 /var/lib/milvus/bin/milvus_server
+```
+
+Then build
+
+```bash
+docker build -t milvusdb/milvus:1.1.1-cpu-d061621-330cc6-fix-trap-err .
+```
 
 ## What is Milvus
 
